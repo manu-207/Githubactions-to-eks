@@ -1,4 +1,4 @@
-name: Deploy WordPress to EKS
+name: Deploy WordPress application  to EKS
  
 on:
   push:
