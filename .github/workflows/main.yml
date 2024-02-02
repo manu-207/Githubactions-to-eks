@@ -1,76 +1,35 @@
-name: Deploy to dev EKS
+name: Deploy to EKS
 
 on:
-  workflow_dispatch:
-  
-  workflow_run:
-    workflows: ["building docket image"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          ref: develop
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.EKS_ACCESS_KEYID }}
-          aws-secret-access-key: ${{ secrets.EKS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.EKS_ACCESS_KEYID }}
+        aws-secret-access-key: ${{ secrets.EKS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
 
-      - name: Install and configure AWS CLI
-        run: |
-          curl "https://d1vvhvl2y92vvt.cloudfront.net/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install --update
+    - name: Install kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
-      - name: Authenticate with EKS cluster
-        run: |
-          aws eks update-kubeconfig --name cco-eks-dev --region us-east-1
+    - name: Update kube config
+      run: aws eks update-kubeconfig --name helm-cluster --region us-east-1
 
-      - name: Install kubectl
-        run: |
-          sudo apt-get update && sudo apt-get install -y apt-transport-https
-          curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-          echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-          sudo apt-get update
-          sudo apt-get install -y kubectl
-          
-      - name: Get the latest image tag
-        id: get-latest-tag
-        run: |
-          REPO_NAME=cco-api-dev
-          latest_tag=$(aws ecr describe-images --repository-name $REPO_NAME --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags' --output text)
-          echo "::set-output name=tag::$latest_tag"
-          
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Pull ECR image
-        run: |
-          latest_tag=${{ steps.get-latest-tag.outputs.tag }}
-          docker pull 848924167540.dkr.ecr.us-east-1.amazonaws.com/cco-api-dev:$latest_tag
+    - name: Deploy my-demo to EKS
+      run: |
+        kubectl apply -f three-apps-ingress group/
         
-      - name: Install and configure EKCL
-        run: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-          sudo mv /tmp/eksctl /usr/local/bin
 
-      #- name: Add OIDC Provider to EKS
-      #  run: |
-      #    eksctl utils associate-iam-oidc-provider --cluster cco-eks-dev --approve
-
-      - name: Deploy to Kubernetes
-        run: |
-          latest_tag=${{ steps.get-latest-tag.outputs.tag }}
-          cat deployment.yaml | envsubst | sed 's|IMAGE_TAG|'"$latest_tag"'|g' | kubectl apply -f -
-        #kubectl apply -f deployment.yaml  
-          
