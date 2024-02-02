@@ -30,6 +30,6 @@ jobs:
 
     - name: Deploy demo-project to EKS
       run: |
-        kubectl apply -f app/
+        kubectl apply -f app/ --validate=false
         
 
