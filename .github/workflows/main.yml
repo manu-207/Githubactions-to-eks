@@ -30,6 +30,6 @@ jobs:
 
     - name: Deploy my-demo to EKS
       run: |
-        kubectl apply -f three-apps-ingress group/
+        kubectl apply -f app/
         
 
