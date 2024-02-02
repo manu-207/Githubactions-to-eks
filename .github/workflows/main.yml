@@ -33,7 +33,7 @@ jobs:
 
       - name: Authenticate with EKS cluster
         run: |
-          aws eks update-kubeconfig --name cco-eks-dev --region us-east-1
+          aws eks update-kubeconfig --name helm-cluster --region us-east-1
 
       - name: Install kubectl
         run: |
