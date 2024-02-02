@@ -28,7 +28,7 @@ jobs:
     - name: Update kube config
       run: aws eks update-kubeconfig --name helm-cluster --region us-east-1
 
-    - name: Deploy my-demo to EKS
+    - name: Deploy demo-project to EKS
       run: |
         kubectl apply -f app/
         
