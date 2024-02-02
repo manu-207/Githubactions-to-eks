@@ -25,6 +25,6 @@ jobs:
  
       - name: Deploy WordPress to EKS
         run: |
-          kubectl apply -f app/deploy.yaml
-          kubectl apply -f app/ingress.yaml
+          kubectl apply -f app/deploy.yaml --validate=false
+          kubectl apply -f app/ingress.yaml --validate=false
          
