@@ -1,4 +1,4 @@
-name: Deploy WordPress appl  to EKS
+name: Deploy WordPress app to EKS
  
 on:
   push:
@@ -21,10 +21,11 @@ jobs:
           aws-region: us-east-1
  
       - name: Update kube config
-        run: aws eks update-kubeconfig --name helm-cluster --region us-east-1
+        run: |
+          aws eks update-kubeconfig --region us-east-1 --name helm-cluster &&
+          kubectl config use-context arn:aws:eks:us-east-1:238393102293:cluster/helm-cluster  
  
       - name: Deploy WordPress to EKS
         run: |
           kubectl apply -f app/deploy.yaml --validate=false
           kubectl apply -f app/ingress.yaml --validate=false
-         
