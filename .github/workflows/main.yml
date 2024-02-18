@@ -21,7 +21,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Update kube config
-        run: aws eks update-kubeconfig --name demo-eks --region us-west-2
+        run: aws eks update-kubeconfig --name canary-eks --region us-west-2
 
       - name: Deploy WordPress to EKS
         run: |
